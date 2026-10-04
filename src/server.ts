@@ -1,6 +1,10 @@
-import express from "express";import http from "node:http";import fs from "node:fs";import path from "node:path";import{fileURLToPath}from"node:url";import{Server}from"socket.io";import{QuizEngine,Question}from"./quiz-engine.js";
-const __dirname=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(__dirname,"..");const questions=JSON.parse(fs.readFileSync(path.join(root,"data/questions.json"),"utf8")) as Question[];const engine=new QuizEngine(questions,10);
-const app=express(),server=http.createServer(app),io=new Server(server);app.use(express.static(path.join(root,"public")));app.use(express.json());const broadcast=()=>io.emit("state",engine.state());
-io.on("connection",socket=>{socket.emit("state",engine.state());socket.on("answer",(p:{username?:string;answer?:string})=>{if(p.username&&p.answer){engine.submitRaw(p.username.trim().slice(0,30),p.answer);broadcast();}});});
-setInterval(()=>{const s=engine.state();if(s.phase==="question"){if(s.secondsLeft<=0){engine.reveal();broadcast();setTimeout(()=>{engine.next();broadcast();},4000);}else{engine.tick();broadcast();}}},1000);
-server.listen(3000,()=>console.log("TikTok Quiz Live: http://localhost:3000"));
+import express from"express";import http from"node:http";import fs from"node:fs";import path from"node:path";import{fileURLToPath}from"node:url";import{Server}from"socket.io";import{QuizEngine,Question}from"./quiz-engine.js";import{connectTikFinity}from"./tikfinity.js";
+const __dirname=path.dirname(fileURLToPath(import.meta.url)),root=path.resolve(__dirname,".."),questions=JSON.parse(fs.readFileSync(path.join(root,"data/questions.json"),"utf8")) as Question[],engine=new QuizEngine(questions,10);
+const app=express(),server=http.createServer(app),io=new Server(server);app.use(express.static(path.join(root,"public")));app.use(express.json());let tikfinityStatus="connecting",lastLeader="";
+const broadcast=()=>io.emit("state",{...engine.state(),tikfinityStatus});
+const speak=(text:string,priority="normal")=>io.emit("speak",{text,priority});
+function questionSpeech(q:Question){let t=q.text;if(q.options)t+=" "+Object.entries(q.options).map(([k,v])=>k+", "+v).join(". ")+". ";return t+" Ai 10 secunde!"}
+io.on("connection",socket=>{socket.emit("state",{...engine.state(),tikfinityStatus});socket.on("answer",(p:{username?:string;answer?:string})=>{if(p.username&&p.answer){engine.submitRaw(p.username.trim().slice(0,30),p.answer);broadcast()}})});
+connectTikFinity((u,c)=>{engine.submitRaw(u,c);broadcast()},s=>{tikfinityStatus=s;console.log("TikFinity:",s.toUpperCase());broadcast()});
+setInterval(()=>{const s=engine.state();if(s.phase!=="question")return;if(s.secondsLeft<=0){const q=engine.current,milestones=engine.reveal();broadcast();const answer=q.options?.[String(q.answer)]??String(q.answer);speak("Răspunsul corect este "+answer+".","high");const leader=engine.leader();for(const m of milestones.slice(0,1))speak(m);if(leader&&leader.username!==lastLeader){if(lastLeader)speak("Avem un nou lider! "+leader.username+" este pe primul loc cu "+leader.score+" de puncte.");lastLeader=leader.username}setTimeout(()=>{engine.next();broadcast();speak(questionSpeech(engine.current),"high")},4000)}else{engine.tick();broadcast()}},1000);
+server.listen(3000,()=>{console.log("Quiz: http://localhost:3000");setTimeout(()=>speak(questionSpeech(engine.current),"high"),1200)});
