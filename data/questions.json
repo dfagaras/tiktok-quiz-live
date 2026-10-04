@@ -1,0 +1,10 @@
+[
+  {"id":1,"text":"Dunărea se varsă în Marea Neagră.","answer":"A","category":"Geografie"},
+  {"id":2,"text":"Canberra este capitala Australiei.","answer":"A","category":"Geografie"},
+  {"id":3,"text":"Soarele este o planetă.","answer":"F","category":"Știință"},
+  {"id":4,"text":"România a aderat la Uniunea Europeană în 2007.","answer":"A","category":"România"},
+  {"id":5,"text":"Oceanul Pacific este mai mic decât Oceanul Atlantic.","answer":"F","category":"Geografie"},
+  {"id":6,"text":"Un octogon are opt laturi.","answer":"A","category":"Cultură generală"},
+  {"id":7,"text":"Venus este planeta cea mai apropiată de Soare.","answer":"F","category":"Spațiu"},
+  {"id":8,"text":"Apa îngheață la 0°C la presiune atmosferică standard.","answer":"A","category":"Știință"}
+]
