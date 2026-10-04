@@ -1,37 +1,5 @@
-const socket = io();
-const $ = id => document.getElementById(id);
-let currentState;
-
-socket.on("state", state => {
-  currentState = state;
-  $("category").textContent = state.question.category.toUpperCase();
-  $("round").textContent = `#${state.round}`;
-  $("question").textContent = state.question.text;
-  $("seconds").textContent = state.phase === "question" ? state.secondsLeft : "✓";
-  $("timerBar").style.width = `${Math.max(0,state.secondsLeft/10*100)}%`;
-  $("aCount").textContent = state.answers.A;
-  $("fCount").textContent = state.answers.F;
-
-  const result = $("result");
-  if (state.phase === "reveal") {
-    result.classList.remove("hidden");
-    result.textContent = state.question.answer === "A" ? "✅ ADEVĂRAT" : "❌ FALS";
-  } else result.classList.add("hidden");
-
-  $("leaders").innerHTML = state.players.map((p,i) =>
-    `<li>${escapeHtml(p.username)} ${p.streak >= 2 ? "🔥"+p.streak : ""}<span>${p.score} pct</span></li>`
-  ).join("") || "<li>Primul răspuns poate fi al tău 👀</li>";
-});
-
-document.querySelectorAll("[data-sim]").forEach(btn => btn.addEventListener("click", () => {
-  socket.emit("answer", { username: $("username").value || "Viewer", answer: btn.dataset.sim });
-}));
-
-$("crowd").addEventListener("click", () => {
-  const names = ["Andrei","Maria","Alex","Ioana","Mihai","Elena","Vlad","Ana","Radu","Daria","Matei","Sofia","Paul","Bianca","Tudor","Iulia","David","Larisa","Robert","Denisa","Cosmin","Alina","George","Teodora","Cristi"];
-  names.forEach((name,i) => setTimeout(() => socket.emit("answer", {username:name,answer:Math.random()>.35?"A":"F"}), i*70));
-});
-
-function escapeHtml(value) {
-  const d=document.createElement("div"); d.textContent=value; return d.innerHTML;
-}
+const socket=io(),$=id=>document.getElementById(id);let currentState;const labels={true_false:"ADEVĂRAT SAU FALS?",multiple_choice:"ALEGE A, B, C SAU D",number:"SCRIE NUMĂRUL ÎN CHAT",text:"SCRIE RĂSPUNSUL ÎN CHAT"};
+socket.on("state",s=>{currentState=s;const q=s.question;$("category").textContent=q.category.toUpperCase();$("round").textContent="#"+s.round;$("eyebrow").textContent=labels[q.type]||"QUIZ";$("question").textContent=q.text;$("seconds").textContent=s.phase==="question"?s.secondsLeft:"✓";$("timerBar").style.width=Math.max(0,s.secondsLeft/10*100)+"%";$("responseCount").textContent=s.responseCount;renderAnswers(q,s.answers);const r=$("result");if(s.phase==="reveal"){r.classList.remove("hidden");r.textContent="✅ RĂSPUNS: "+answerLabel(q);}else r.classList.add("hidden");$("leaders").innerHTML=s.players.map(p=>"<li>"+esc(p.username)+" "+(p.streak>=2?"🔥"+p.streak:"")+"<span>"+p.score+" pct</span></li>").join("")||"<li>Primul răspuns poate fi al tău 👀</li>";});
+function renderAnswers(q,c){const box=$("answers");box.innerHTML="";if(q.options){Object.entries(q.options).forEach(([k,v])=>{const el=document.createElement("div");el.className="answer option";el.innerHTML="<b>"+esc(k)+"</b><span>"+esc(v)+"</span><small>"+(c[k]||0)+"</small>";box.appendChild(el);});}else{const el=document.createElement("div");el.className="answer free";el.innerHTML="<b>💬</b><span>"+(q.type==="number"?"Scrie numărul în comentarii":"Scrie răspunsul în comentarii")+"</span><small>"+Object.values(c).reduce((a,b)=>a+b,0)+" răspunsuri</small>";box.appendChild(el);}}
+function answerLabel(q){return(q.options&&q.options[String(q.answer)])||String(q.answer)+(q.unit?" "+q.unit:"");}function send(){const a=$("freeAnswer").value.trim();if(!a)return;socket.emit("answer",{username:$("username").value||"Viewer",answer:a});$("freeAnswer").value="";}$("sendAnswer").addEventListener("click",send);$("freeAnswer").addEventListener("keydown",e=>{if(e.key==="Enter")send();});
+$("crowd").addEventListener("click",()=>{const names=["Andrei","Maria","Alex","Ioana","Mihai","Elena","Vlad","Ana","Radu","Daria","Matei","Sofia","Paul","Bianca","Tudor","Iulia","David","Larisa","Robert","Denisa","Cosmin","Alina","George","Teodora","Cristi"],q=currentState.question,keys=q.options?Object.keys(q.options):null;names.forEach((name,i)=>setTimeout(()=>{let a;if(keys)a=Math.random()<.7?String(q.answer):keys[Math.floor(Math.random()*keys.length)];else if(q.type==="number")a=Math.random()<.7?String(q.answer):String(Number(q.answer)+Math.ceil(Math.random()*5));else a=Math.random()<.7?String(q.answer):["nu stiu","venus","cluj","test"][Math.floor(Math.random()*4)];socket.emit("answer",{username:name,answer:a});},i*70));});function esc(v){const d=document.createElement("div");d.textContent=v;return d.innerHTML;}
