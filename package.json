@@ -1,6 +1,1 @@
-{
-  "name":"tiktok-quiz-live","version":"0.2.0","private":true,
-  "scripts":{"dev":"tsx watch src/server.ts","start":"tsx src/server.ts","typecheck":"tsc --noEmit"},
-  "dependencies":{"express":"^5.1.0","socket.io":"^4.8.1","ws":"^8.18.3"},
-  "devDependencies":{"@types/express":"^5.0.3","@types/node":"^24.0.0","@types/ws":"^8.18.1","tsx":"^4.20.0","typescript":"^5.9.0"}
-}
+{"name":"tiktok-quiz-live","version":"0.3.0","private":true,"scripts":{"dev":"tsx watch src/server.ts","start":"tsx src/server.ts","typecheck":"tsc --noEmit"},"dependencies":{"dotenv":"^17.2.3","express":"^5.1.0","socket.io":"^4.8.1","ws":"^8.18.3"},"devDependencies":{"@types/express":"^5.0.3","@types/node":"^24.0.0","@types/ws":"^8.18.1","tsx":"^4.20.0","typescript":"^5.9.0"}}
